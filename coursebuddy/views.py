@@ -32,7 +32,7 @@ def LoginAPI(request):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@api_view(['GET', 'POST'])
+@api_view(['GET'])
 def ProfessorUserRatingsAPI(request):
     queryset = ProfessorRatingsFromUser.objects.all()
 
@@ -46,12 +46,42 @@ def ProfessorUserRatingsAPI(request):
         serializer = ProfessorUserRatingSerializer(ratings, context={'request': request}, many=True)
         return Response(serializer.data)
 
-    if request.method == 'POST':
-        serializer = ProfessorUserRatingSerializer(data=request.data, context={'request': request})
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+@api_view(['POST'])
+def AddUserRatingsAPI(request):
+    serializer = ProfessorUserRatingSerializer(data=request.data, context={'request': request})
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+def UpdateUserRatingsAPI(request):
+    queryset = ProfessorRatingsFromUser.objects.all()
+    user = request.GET.get('username')
+    crn = request.GET.get('crn')
+    rating = float(request.GET.get('rating'))
+
+    try: 
+        res = queryset.filter(username=user, crn=crn).update(professor_ratings=rating)
+    except res.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+    return Response(status=status.HTTP_201_CREATED)
+
+
+@api_view(['GET'])
+def DeleteRatingsAPI(request):
+    queryset = ProfessorRatingsFromUser.objects.all()
+
+    if request.method == 'GET':
+        user = request.GET.get('username')
+        crn = request.GET.get('crn')
+
+        try: 
+            res = queryset.get(username=user, crn=crn).delete()
+        except res.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        
+        return Response(status=status.HTTP_201_CREATED)
 
 @api_view(['GET'])
 def ProfessorWebsiteRatingsAPI(request, professor):

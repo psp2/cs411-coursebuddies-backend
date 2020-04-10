@@ -30,7 +30,10 @@ from coursebuddy import views
 urlpatterns = [
     path('admin/', admin.site.urls),
     # path('api/', include(router.urls))
-    re_path(r'^api/user_ratings/$', views.ProfessorUserRatingsAPI),
+    re_path(r'^api/professor_user_ratings/$', views.ProfessorUserRatingsAPI),
+    re_path(r'^api/add_user_ratings/$', views.AddUserRatingsAPI),
+    re_path(r'^api/update_user_ratings/$', views.UpdateUserRatingsAPI),
+    re_path(r'^api/delete_user_ratings/$', views.DeleteRatingsAPI),
     re_path(r'^api/site_ratings/$', views.ProfessorWebsiteRatingsAPI),
     re_path(r'^api/study_group/$', views.StudyGroupAPI),
     re_path(r'^api/login/$', views.LoginAPI),
