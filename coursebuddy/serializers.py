@@ -16,6 +16,17 @@ class StudyGroupSerializer(serializers.ModelSerializer):
         model=Studygroup
         fields = "__all__"
 
+class TestSerializer(serializers.ModelSerializer):
+    crn = serializers.IntegerField()  # Field name made lowercase.
+    professor = serializers.CharField()  # Field name made lowercase.
+    averagegpa = serializers.FloatField()  # Field name made lowercase.
+    professor_ratings = serializers.FloatField()  # Field name made lowercase.
+    difficulty = serializers.FloatField()
+
+    class Meta:
+        model = Test
+        fields = "__all__"
+
 class LoginSerializer(serializers.ModelSerializer):
     class Meta:
         model=Login
