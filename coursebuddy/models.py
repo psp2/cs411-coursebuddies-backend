@@ -7,12 +7,19 @@
 # Feel free to rename the models, but don't rename db_table values or field names.
 from django.db import models
 
+class Test(models.Model):
+     crn = models.IntegerField(db_column='CRN')  # Field name made lowercase.
+     professor = models.CharField(db_column='Professor', primary_key=True, max_length=45) 
+     averagegpa = models.FloatField(db_column='AverageGpa', blank=True, null=True)  # Field name made lowercase.
+     professor_ratings = models.FloatField(db_column='Professor_ratings', blank=True, null=True)  # Field name made lowercase.
+     difficulty = models.CharField(db_column='Difficulty', max_length=45, blank=True, null=True)  # Field name made lowercase.
 
 class ProfessorRatingsFromUser(models.Model):
-    username = models.CharField(db_column='Username', primary_key=True, max_length=45)  # Field name made lowercase.
+    username = models.CharField(db_column='Username', max_length=45)  # Field name made lowercase.
     crn = models.IntegerField(db_column='CRN')  # Field name made lowercase.
     professor_ratings = models.FloatField(db_column='Professor_ratings', blank=True, null=True)  # Field name made lowercase.
     difficulty = models.CharField(db_column='Difficulty', max_length=45, blank=True, null=True)  # Field name made lowercase.
+    id = models.AutoField(db_column='id', primary_key=True)
 
     class Meta:
         managed = False
@@ -34,7 +41,7 @@ class ProfessorRatingsFromWebsites(models.Model):
 
 
 class Studygroup(models.Model):
-    username = models.IntegerField(db_column='Username', primary_key=True)  # Field name made lowercase.
+    username = models.CharField(db_column='Username', primary_key=True,max_length=45)  # Field name made lowercase.
     major = models.CharField(db_column='Major', max_length=45)  # Field name made lowercase.
     email = models.CharField(db_column='Email', max_length=45)  # Field name made lowercase.
     year = models.CharField(db_column='Year', max_length=45)  # Field name made lowercase.
