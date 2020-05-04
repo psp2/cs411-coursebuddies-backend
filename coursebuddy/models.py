@@ -23,15 +23,16 @@ class Test(models.Model):
 
 
 class ProfessorRatingsFromUser(models.Model):
-    username = models.CharField(db_column='Username', primary_key=True, max_length=45)  # Field name made lowercase.
+    username = models.CharField(db_column='Username', max_length=45)  # Field name made lowercase.
     crn = models.IntegerField(db_column='CRN')  # Field name made lowercase.
     professor_ratings = models.FloatField(db_column='Professor_ratings', blank=True, null=True)  # Field name made lowercase.
     difficulty = models.CharField(db_column='Difficulty', max_length=45, blank=True, null=True)  # Field name made lowercase.
+    id = models.AutoField(db_column='id', primary_key=True)
 
     class Meta:
         managed = False
         db_table = 'Professor_ratings_from_user'
-        unique_together = (('username', 'crn'),)
+        #unique_together = (('username', 'crn'),)
 
 
 class ProfessorRatingsFromWebsites(models.Model):

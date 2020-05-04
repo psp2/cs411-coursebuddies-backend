@@ -39,4 +39,5 @@ urlpatterns = [
     re_path(r'^api/login/$', views.LoginAPI),
     re_path(r'^api/sp19/$', views.Spring19GradesAPI),
     re_path(r'^api/user_ratings/$', views.UserRatingsAPI),
+    re_path(r'^api/study_buddy/$', views.StudyBuddyAPI),
 ]

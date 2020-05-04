@@ -23,7 +23,7 @@ def LoginAPI(request):
             name = Login.objects.raw('SELECT * FROM coursebuddy.login WHERE username= %s and password  = %s;',[username,password])
         except name.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
-        serializer = LoginSerializer(name, context={'request': request})
+        serializer = LoginSerializer(name, context={'request': request}, many=True)
         return Response(serializer.data)
     
     elif request.method == 'POST':
@@ -48,6 +48,7 @@ def ProfessorUserRatingsAPI(request):
             queryset = Test.objects.raw('SELECT CRN,a.Professor,AverageGpa,avg_ratings,avg_difficulty FROM coursebuddy.sp19 as a JOIN (SELECT Professor,avg(Professor_ratings) as avg_ratings,avg(Difficulty) as avg_difficulty from coursebuddy.Professor_ratings_from_user as a join coursebuddy.sp19 as b on a.CRN = b.CRN WHERE a.CRN = %s group by Professor) as b on a.Professor = b.Professor',[crn])
             q = queryset[0]
             ratings = q.avg_ratings
+            print(ratings)
 
         except ratings.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
@@ -67,12 +68,13 @@ def UserRatingsAPI(request):
         ratings = q.professor_ratings
         print(ratings)
 
-    except ratings.DoesNotExist:
+    except IndexError:
         return Response(status=status.HTTP_404_NOT_FOUND)
     return Response(ratings)
 
 @api_view(['POST'])
 def AddUserRatingsAPI(request):
+
     serializer = ProfessorUserRatingSerializer(data=request.data, context={'request': request})
     if serializer.is_valid():
         s = serializer.data
@@ -81,12 +83,18 @@ def AddUserRatingsAPI(request):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+    #with connection.cursor() as cursor:
+    #    cursor.execute('INSERT INTO coursebuddy.Professor_ratings_from_user (Username, CRN, Professor_ratings, Difficulty) VALUES (%s, %s, %s, %s);',[user,crn,professor_ratings,difficulty])
+    #return Response(status=status.HTTP_201_CREATED)
+
+
 @api_view(['GET'])
 def UpdateUserRatingsAPI(request):
     queryset = ProfessorRatingsFromUser.objects.all()
     user = request.GET.get('username')
     crn = request.GET.get('crn')
-    rating = float(request.GET.get('rating'))
+    rating =request.GET.get('rating')
 
     #res = ProfessorRatingsFromUser.objects.raw('SELECT * From coursebuddy.Professor_ratings_from_user WHERE Username=%s and CRN = %s;',[user,crn])
 
@@ -147,17 +155,32 @@ def ProfessorWebsiteRatingsAPI(request, professor):
         return Response(serializer.data)    
 
 
-@api_view(['GET'])
+@api_view(['POST'])
 def StudyGroupAPI(request, username):
-    queryset = Studygroup.objects.all()
 
+    serializer = StudyGroupSerializer(data=request.data, context={'request': request})
+    if serializer.is_valid():
+        s = serializer.data
+        with connection.cursor() as cursor:
+            cursor.execute('INSERT INTO coursebuddy.StudyGroup (Username, Major, Email, Year, CRN) VALUES (%s, %s, %s, %s,%s);',[s['username'],s['major'],s['email'],s['year'],s['crn']])
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+def StudyBuddyAPI(request):
+
+    username = request.GET.get('username')
+    crn = request.GET.get('crn')
+    firstpreference = request.GET.get('firstpreference')
+    secondpreference = request.GET.get('secondpreference')
+    thirdpreference = request.GET.get('thirdpreference')
     try:
-        name = queryset.get(username=username)
+        name = Studygroup.objects.raw('CALL test("%s","%s","%s","%s",%s);',[firstpreference,secondpreference,thirdpreference,username,crn])
+        #name = Studygroup.objects.raw('CALL test("CRN","Major","Year","user1");')
     except name.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
+    serializer = StudyGroupSerializer(name, context={'request': request}, many=True)
+    return Response(serializer.data)
 
-    if request.method == 'GET':
-        serializer = StudyGroupSerializer(name, context={'request': request})
-        return Response(serializer.data)
 
 
