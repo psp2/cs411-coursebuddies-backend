@@ -48,7 +48,7 @@ class ProfessorRatingsFromWebsites(models.Model):
         unique_together = (('professor', 'crn'),)
 
 class Studygroup(models.Model):
-    username = models.IntegerField(db_column='Username', primary_key=True)  # Field name made lowercase.
+    username = models.CharField(db_column='Username', primary_key=True,max_length=45)  # Field name made lowercase.
     major = models.CharField(db_column='Major', max_length=45)  # Field name made lowercase.
     email = models.CharField(db_column='Email', max_length=45)  # Field name made lowercase.
     year = models.CharField(db_column='Year', max_length=45)  # Field name made lowercase.
