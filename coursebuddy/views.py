@@ -12,6 +12,8 @@ from django.views import View
 
 from .serializers import *
 
+from collections import namedtuple
+
 @api_view(['GET', 'POST'])
 def LoginAPI(request):
     queryset = Login.objects.all()
@@ -164,12 +166,39 @@ def StudyBuddyAPI(request):
     secondpreference = request.GET.get('second_pref')
     thirdpreference = request.GET.get('third_pref')
     try:
-        name = Studygroup.objects.raw('CALL test("%s","%s","%s","%s",%s);',[firstpreference,secondpreference,thirdpreference,username,crn])
+        name = Studygroup.objects.raw('CALL test(%s,%s,%s,%s,%s);',[firstpreference,secondpreference,thirdpreference,username,crn])
     except name.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
     serializer = StudyGroupSerializer(name, context={'request': request}, many=True)
     return Response(serializer.data)
 
+def namedTuple(cursor):
+    "Return all rows from a cursor as a namedtuple"
+    desc = cursor.description
+    nt_result = namedtuple('Result', [col[0] for col in desc])
+    return [nt_result(*row) for row in cursor.fetchall()]
+
+@api_view(['POST','GET'])
+def UserRegistrationsAPI(request):
+
+    username = request.GET.get('username')
+
+    if request.method == 'GET':
+        with connection.cursor() as cursor:
+            cursor.execute('SELECT username, major, email, year, crn FROM StudyGroup NATURAL JOIN registrations WHERE Username = %s;',[username])
+            results = namedTuple(cursor)
+            regserializer = RegistrationSerializer(results, context={'request': request}, many = True)
+            return Response(regserializer.data, status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+
+    elif request.method == 'POST':
+        regserializer = RegistrationSerializer(data=request.data, context={'request': request})
+        if regserializer.is_valid():
+            s = regserializer.data
+            with connection.cursor() as cursor:
+                cursor.execute('CALL insertUserData(%s,%s,%s,%s,%s);',[s['username'],s['major'],s['email'],s['year'],s['crn']])
+            return Response(regserializer.data, status=status.HTTP_200_OK)
+        return Response(regserializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 

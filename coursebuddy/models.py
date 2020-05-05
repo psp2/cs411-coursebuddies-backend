@@ -41,15 +41,24 @@ class ProfessorRatingsFromWebsites(models.Model):
 
 
 class Studygroup(models.Model):
-    username = models.CharField(db_column='Username', primary_key=True,max_length=45)  # Field name made lowercase.
+    username = models.CharField(db_column='Username', primary_key=True, max_length=45)  # Field name made lowercase.
     major = models.CharField(db_column='Major', max_length=45)  # Field name made lowercase.
     email = models.CharField(db_column='Email', max_length=45)  # Field name made lowercase.
     year = models.CharField(db_column='Year', max_length=45)  # Field name made lowercase.
-    crn = models.IntegerField(db_column='CRN')  # Field name made lowercase.
 
     class Meta:
         managed = False
         db_table = 'StudyGroup'
+
+
+class Registrations(models.Model):
+    id = models.AutoField(db_column='id', primary_key=True)
+    username = models.CharField(db_column='Username', max_length=45)  # Field name made lowercase.
+    crn = models.IntegerField(db_column='CRN')  # Field name made lowercase.
+
+    class Meta:
+        managed = False
+        db_table = 'registrations'
         unique_together = (('username', 'crn'),)
 
 
