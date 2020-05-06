@@ -37,3 +37,5 @@ class RegistrationSerializer(serializers.Serializer):
     email = serializers.CharField(max_length=45)
     year = serializers.CharField(max_length=45)
     crn = serializers.IntegerField()
+    subject = serializers.CharField(max_length=45, required=False)
+    course = serializers.IntegerField(required=False)

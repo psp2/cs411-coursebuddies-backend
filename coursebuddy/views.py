@@ -185,7 +185,7 @@ def UserRegistrationsAPI(request):
 
     if request.method == 'GET':
         with connection.cursor() as cursor:
-            cursor.execute('SELECT username, major, email, year, crn FROM StudyGroup NATURAL JOIN registrations WHERE Username = %s;',[username])
+            cursor.execute('SELECT username, major, email, year, crn, subject, course FROM (coursebuddy.StudyGroup natural join coursebuddy.registrations S) NATURAL JOIN coursebuddy.sp19 WHERE Username = %s;',[username])
             results = namedTuple(cursor)
             regserializer = RegistrationSerializer(results, context={'request': request}, many = True)
             return Response(regserializer.data, status=status.HTTP_200_OK)
