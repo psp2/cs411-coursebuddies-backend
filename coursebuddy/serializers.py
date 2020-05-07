@@ -11,6 +11,10 @@ class ProfessorWebsiteRatingSerializer(serializers.ModelSerializer):
         model=ProfessorRatingsFromWebsites
         fields = "__all__"
 
+class RMPSerializer(serializers.Serializer):
+     professor = serializers.CharField(max_length=45)
+     professor_ratings = serializers.FloatField(required=False)
+
 class StudyGroupSerializer(serializers.ModelSerializer):
     class Meta:
         model=Studygroup

@@ -14,6 +14,43 @@ from .serializers import *
 
 from collections import namedtuple
 
+import requests, re
+from bs4 import BeautifulSoup
+def scrape(professor):
+    profNameSplit = re.split(' |, ',professor)
+    lastname = profNameSplit[0]
+    firstname = profNameSplit[1]
+    rating = 0.0
+    ratingCount = 0
+
+    searchName = "{}, {}".format(lastname, firstname)
+
+    URL = 'https://www.ratemyprofessors.com/search.jsp?queryoption=HEADER&queryBy=teacherName&schoolName=University+Of+Illinois+at+Urbana+-+Champaign&schoolID=1112&query={0}+{1}'.format(firstname, lastname)
+    page = requests.get(URL)
+
+    soup = BeautifulSoup(page.content, 'html.parser')
+    results = soup.find(id='searchResultsBox')
+    profs = results.find_all('li', class_='listing PROFESSOR')
+    for elems in profs:
+        name = elems.find('span', class_='main').text.strip()
+        href = elems.find('a').get('href').strip()
+        if name == searchName:
+            rURL = 'https://www.ratemyprofessors.com{0}'.format(href)
+            page = requests.get(rURL)
+            soup = BeautifulSoup(page.content, 'html.parser')
+            css = soup.select('#root > div > div > div.PageWrapper__StyledPageWrapper-sc-3p8f0h-0.kKcqwZ > div.TeacherRatingsPage__TeacherBlock-a57owa-1.jJhFVh > div.TeacherInfo__StyledTeacher-ti1fio-1.fIlNyU > div:nth-child(1) > div.RatingValue__AvgRating-qw8sqy-1.gIgExh > div > div.RatingValue__Numerator-qw8sqy-2.gxuTRq')
+            try:
+                rating += float(css[0].text)
+                ratingCount += 1
+            except ValueError:
+                continue
+    try:
+        rating = rating / ratingCount
+    except ZeroDivisionError:
+        rating = -1
+    return {'professor': professor, 'professor_ratings': rating}
+
+
 @api_view(['GET', 'POST'])
 def LoginAPI(request):
     queryset = Login.objects.all()
@@ -50,8 +87,7 @@ def ProfessorUserRatingsAPI(request):
             # ratings = queryset.filter(crn=crn)
             queryset = Test.objects.raw('SELECT CRN,a.Professor,AverageGpa,avg_ratings,avg_difficulty FROM coursebuddy.sp19 as a JOIN (SELECT Professor,avg(Professor_ratings) as avg_ratings,avg(Difficulty) as avg_difficulty from coursebuddy.Professor_ratings_from_user as a join coursebuddy.sp19 as b on a.CRN = b.CRN WHERE a.CRN = %s group by Professor) as b on a.Professor = b.Professor',[crn])
             q = queryset[0]
-            ratings = q.avg_ratings
-            print(ratings)
+            ratings = format(q.avg_ratings, '.1f')
         except ratings.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
@@ -67,8 +103,8 @@ def UserRatingsAPI(request):
     try: 
         queryset = ProfessorRatingsFromUser.objects.raw('SELECT * FROM coursebuddy.Professor_ratings_from_user WHERE username = %s and CRN = %s;',[user,crn])
         q = queryset[0]
-        ratings = q.professor_ratings
-    except IndexError:
+        ratings = format(q.professor_ratings, '.1f')
+    except ratings.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
     return Response(ratings)
 
@@ -110,7 +146,7 @@ def DeleteRatingsAPI(request):
 
         try: 
             # res = queryset.get(username=user, crn=crn).delete()
-            res = ProfessorRatingsFromUser.objects.raw('SELECT * From coursebuddy.Professor_ratings_from_user WHERE Username=%s and CRN = %s;',[user,crn])
+            res = ProfessorRatingsFromUser.objects.raw('''SELECT * FROM coursebuddy.Professor_ratings_from_user WHERE Username=%s and CRN = %s;''',[user,crn])
             with connection.cursor() as cursor:
                 cursor.execute('DELETE FROM coursebuddy.Professor_ratings_from_user WHERE Username=%s and CRN=%s;',[user,crn])
         except res.DoesNotExist:
@@ -119,17 +155,27 @@ def DeleteRatingsAPI(request):
         return Response(status=status.HTTP_201_CREATED)
 
 @api_view(['GET'])
-def ProfessorWebsiteRatingsAPI(request, professor):
-    queryset = ProfessorRatingsFromWebsites.objects.all()
-
-    try:
-        professor = queryset.get(professor=professor)
-    except professor.DoesNotExist:
-        return Response(status=status.HTTP_404_NOT_FOUND)
-
+def ProfessorWebsiteRatingsAPI(request):
+    professor = request.GET.get('professor')
     if request.method == 'GET':
-        serializer = ProfessorWebsiteRatingSerializer(professor, context={'request': request})
-        return Response(serializer.data)    
+        with connection.cursor() as cursor:
+            webdata = scrape(professor)
+            if float(webdata['professor_ratings']) > 0:
+                serializer = RMPSerializer(data=webdata, context={'request': request})
+                if serializer.is_valid():
+                    s = serializer.data
+                    cursor.execute('INSERT INTO coursebuddy.Professor_ratings_from_websites (professor, professor_ratings) VALUES (%s,%s) ON DUPLICATE KEY UPDATE professor_ratings = %s ;',[s['professor'],s['professor_ratings'], s['professor_ratings']])
+                    return Response(serializer.data, status=status.HTTP_200_OK)
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                cursor.execute('SELECT professor, professor_ratings FROM coursebuddy.Professor_ratings_from_websites WHERE professor = %s;',[professor])
+                results = namedTuple(cursor)
+                if results == []:
+                    return Response("Professor rating not avaliable", status=status.HTTP_400_BAD_REQUEST)
+                else:
+                    ratingSerialize = RMPSerializer(results, context={'request': request}, many=True)
+                    return Response(ratingSerialize.data, status=status.HTTP_200_OK)
+    return Response(ratingSerialize.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
 def Spring19GradesAPI(request):

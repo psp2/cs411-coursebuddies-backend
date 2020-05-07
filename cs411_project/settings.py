@@ -83,7 +83,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'coursebuddy',
         'USER': 'root',
-        'PASSWORD': '!LQSYMPSP!',
+        'PASSWORD': 'insertyourpw',
         'HOST': '0.0.0.0',
         'PORT': ''
     }

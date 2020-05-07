@@ -32,19 +32,18 @@ class ProfessorRatingsFromWebsites(models.Model):
     professor_ratings = models.FloatField(db_column='Professor_ratings', blank=True, null=True)  # Field name made lowercase.
     total = models.IntegerField(db_column='Total', blank=True, null=True)  # Field name made lowercase.
     difficulty = models.FloatField(db_column='Difficulty', blank=True, null=True)  # Field name made lowercase.
-    crn = models.IntegerField(db_column='CRN')  # Field name made lowercase.
 
     class Meta:
         managed = False
         db_table = 'Professor_ratings_from_websites'
-        unique_together = (('professor', 'crn'),)
-
+       
 
 class Studygroup(models.Model):
     username = models.CharField(db_column='Username', primary_key=True, max_length=45)  # Field name made lowercase.
     major = models.CharField(db_column='Major', max_length=45)  # Field name made lowercase.
     email = models.CharField(db_column='Email', max_length=45)  # Field name made lowercase.
     year = models.CharField(db_column='Year', max_length=45)  # Field name made lowercase.
+    crn = models.IntegerField(db_column='CRN', blank=True) # Field not required
 
     class Meta:
         managed = False
