@@ -11,6 +11,10 @@ class ProfessorWebsiteRatingSerializer(serializers.ModelSerializer):
         model=ProfessorRatingsFromWebsites
         fields = "__all__"
 
+class RMPSerializer(serializers.Serializer):
+     professor = serializers.CharField(max_length=45)
+     professor_ratings = serializers.FloatField(required=False)
+
 class StudyGroupSerializer(serializers.ModelSerializer):
     class Meta:
         model=Studygroup
@@ -25,3 +29,17 @@ class Spring19GradesSerializer(serializers.ModelSerializer):
     class Meta:
         model=Sp19
         fields = "__all__"
+
+class RegistrationsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=Registrations
+        fields = "_all_"
+
+class RegistrationSerializer(serializers.Serializer):
+    username = serializers.CharField(max_length=45)
+    major = serializers.CharField(max_length=45)
+    email = serializers.CharField(max_length=45)
+    year = serializers.CharField(max_length=45)
+    crn = serializers.IntegerField()
+    subject = serializers.CharField(max_length=45, required=False)
+    course = serializers.IntegerField(required=False)
